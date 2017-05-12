@@ -11,6 +11,7 @@
 
 void InitSysCtrl(void);
 void watchdogEnable(void);
+void watchdogDefuse(void);
 void wait100ms(void);
 void Gpio_select(void);
 
@@ -22,12 +23,14 @@ void main(void){
 	
 	InitSysCtrl();
 	watchdogEnable();
+	watchdogDefuse();
 	Gpio_select();
 
 	while(1){
 		GpioDataRegs.GPBTOGGLE.bit.GPIO32 = 1 ;
 		wait100ms();
 	}
+
 }
 
 void watchdogEnable(){
@@ -36,15 +39,21 @@ void watchdogEnable(){
 	EDIS; /* reprotect registers */
 }
 
+void watchdogDefuse(){
+	/* reset watchdog timer so prevents from triggering reset */
+	EALLOW;
+	SysCtrlRegs.WDKEY=0x55;
+	SysCtrlRegs.WDKEY=0xAA;
+	EDIS;
+}
+
 void wait100ms(){
 	long i;
 
 	for(i=0;i<577000;i++){
 		asm (" NOP ");
 		asm (" NOP ");
-		EALLOW;
-		SysCtrlRegs.WDKEY = 0xAA;
-		EDIS;
+		watchdogDefuse();
 	}
 }
 
