@@ -9,12 +9,27 @@
 //###########################################################################
 #include "DSP2833x_Device.h"
 
+/* custom definitions */
+#define DSP_CLOCK_SPEED_MHZ 150
+#define TIMER0_PERIOD_US (float)100000
+
+/* ext functions prototypes */
 void InitSysCtrl(void);
+void InitPieCtrl(void);
+void InitPieVectTable (void);
+void ConfigCpuTimer(struct CPUTIMER_VARS *, float, float);
+void InitCpuTimers(void);
+
+/* functions prototypes */
+void timerConfig(float timer_period_us);
+void connectITFunctions(void);
 void watchdogEnable(void);
 void watchdogDefuse(void);
 void wait100ms(void);
 void Gpio_select(void);
 
+/* it functions prototypes*/
+interrupt void cpu_timer0_isr(void);
 
 //###########################################################################
 //					code	main
@@ -22,16 +37,54 @@ void Gpio_select(void);
 void main(void){
 	
 	InitSysCtrl();
+
 	watchdogEnable();
 	watchdogDefuse();
+
 	Gpio_select();
 
+	InitPieCtrl(); /* init ITs */
+	InitPieVectTable(); /* Cette fonction TI va initialiser la mémoire du module PIE. */
+	connectITFunctions(); /* branch functions to interruptions */
+
+	timerConfig(TIMER0_PERIOD_US);
+	IER |= 1; /* INT1 enable */
+	EINT; /* all ITs allowed */
+	CpuTimer0Regs.TCR.bit.TSS = 0; /* timer start */
+
 	while(1){
-		GpioDataRegs.GPBTOGGLE.bit.GPIO32 = 1 ;
-		wait100ms();
+		/* loop */
 	}
 
+}/* main */
+
+
+/* ITs */
+
+interrupt void cpu_timer0_isr(void){
+	CpuTimer0.InterruptCount++;
+	GpioDataRegs.GPBTOGGLE.bit.GPIO32 = 1 ;
+	watchdogDefuse();
+
+	PieCtrlRegs.PIEACK.all = PIEACK_GROUP1; /* it ACK : must be set to allow further calls to cpu_timer0_isr */
 }
+
+void connectITFunctions(){
+	EALLOW;
+	PieVectTable.TINT0 = & cpu_timer0_isr;
+	EDIS;
+}
+
+
+/* Timer */
+void timerConfig(float timer_period_us){
+	InitCpuTimers();
+	ConfigCpuTimer(& CpuTimer0, DSP_CLOCK_SPEED_MHZ, timer_period_us);
+	PieCtrlRegs.PIEIER1.bit.INTx7 = 1; /* INT1 timer enable */
+}
+
+
+/* Watchdog */
 
 void watchdogEnable(){
 	EALLOW; /* unprotect registers */
@@ -46,6 +99,9 @@ void watchdogDefuse(){
 	SysCtrlRegs.WDKEY=0xAA;
 	EDIS;
 }
+
+
+/* Utils */
 
 void wait100ms(){
 	long i;
