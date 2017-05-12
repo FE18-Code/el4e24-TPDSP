@@ -10,6 +10,7 @@
 #include "DSP2833x_Device.h"
 
 void InitSysCtrl(void);
+void watchdogEnable(void);
 void wait100ms(void);
 void Gpio_select(void);
 
@@ -20,12 +21,19 @@ void Gpio_select(void);
 void main(void){
 	
 	InitSysCtrl();
+	watchdogEnable();
 	Gpio_select();
 
 	while(1){
 		GpioDataRegs.GPBTOGGLE.bit.GPIO32 = 1 ;
 		wait100ms();
 	}
+}
+
+void watchdogEnable(){
+	EALLOW; /* unprotect registers */
+	SysCtrlRegs.WDCR = 0x00AF; /* WD enable */
+	EDIS; /* reprotect registers */
 }
 
 void wait100ms(){
