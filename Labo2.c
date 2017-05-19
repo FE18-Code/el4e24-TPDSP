@@ -145,7 +145,8 @@ void ePWM_Config (void) {
 	EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0;
 	EPwm1Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
 	EPwm1Regs.TBPRD = 37500;
-	EPwm1Regs.AQCTLA.all = 6; // zero = set; period = clear
+	EPwm1Regs.AQCTLA.all = 96; // CTR(up)=CMPA = set; CTR(down)=CMPA = clear
+	EPwm1Regs.CMPA.half.CMPA = 25000;
 
 	/* PWM 2A */
 	EPwm2Regs.TBCTL.bit.CLKDIV = 1;
