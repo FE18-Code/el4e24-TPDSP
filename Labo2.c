@@ -158,7 +158,8 @@ void ePWM_Config (void) {
 	EPwm1Regs.AQCTLA.all = 96; // CTR(up)=CMPA = set; CTR(down)=CMPA = reset
 
 	/* PWM 1B */
-	EPwm1Regs.AQCTLB.all = 144; // CTR(up)=CMPA = reset; CTR(down)=CMPA = set
+	EPwm1Regs.AQCTLB.all = 1536; // CTR(up)=CMPB = set; CTR(down)=CMPB = reset
+	EPwm1Regs.CMPB = EPwm1Regs.TBPRD / 2; // setup independent alpha
 
 	/* PWM 2A */
 	EPwm2Regs.TBCTL.bit.CLKDIV = 1;
