@@ -28,6 +28,7 @@ void watchdogDefuse(void);
 void wait100ms(void);
 void Gpio_select(void);
 void ePWM_Config (void);
+void ePWM_SetSync(void);
 
 /* it functions prototypes*/
 interrupt void cpu_timer0_isr(void);
@@ -159,6 +160,24 @@ void ePWM_Config (void) {
 	EPwm3Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
 	EPwm3Regs.TBPRD = 37500;
 	EPwm3Regs.AQCTLA.all = 6; // zero = set; period = clear
+
+	ePWM_SetSync();
+}
+
+void ePWM_SetSync(void) {
+	/* PWM1 SYNC OUT */
+	EPwm1Regs.TBCTL.bit.SYNCOSEL = 01; // Sync Out Select : generates sync signal when CTR = 0
+
+	/* PWM2 SYNC IN */
+	EPwm2Regs.TBCTL.bit.PHSEN = 1; // Validation du reglage de phase : CTR=TBPHS on EPWNxSYNCI signal
+	EPwm2Regs.TBPHS.half.TBPHS = 12500; // 1/3 de TBPRD
+
+	/* PWM2 SYNC OUT */
+	EPwm2Regs.TBCTL.bit.SYNCOSEL = 00; // Sync Out Select: SYNCIN = SYNCOUT generates sync signal when SYNCIN is received
+
+	/* PWM 3 SYNC IN */
+	EPwm3Regs.TBCTL.bit.PHSEN = 1; // Validation du reglage de phase : CTR=TBPHS on EPWNxSYNCI signal
+	EPwm3Regs.TBPHS.half.TBPHS = 25000; // 2/3 de TBPRD
 }
 
 //===========================================================================
