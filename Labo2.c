@@ -27,7 +27,7 @@ void watchdogEnable(void);
 void watchdogDefuse(void);
 void wait100ms(void);
 void Gpio_select(void);
-void PWM_Config (void);
+void ePWM_Config (void);
 
 /* it functions prototypes*/
 interrupt void cpu_timer0_isr(void);
@@ -43,7 +43,7 @@ void main(void){
 	watchdogDefuse();
 
 	Gpio_select();
-	PWM_Config();
+	ePWM_Config();
 	InitPieCtrl(); /* init ITs */
 	InitPieVectTable(); /* Cette fonction TI va initialiser la mémoire du module PIE. */
 	connectITFunctions(); /* branch functions to interruptions */
@@ -78,6 +78,7 @@ void connectITFunctions(){
 
 
 /* Timer */
+
 void timerConfig(float timer_period_us){
 	InitCpuTimers();
 	ConfigCpuTimer(& CpuTimer0, DSP_CLOCK_SPEED_MHZ, timer_period_us);
@@ -117,12 +118,15 @@ void wait100ms(){
 void Gpio_select(void){
 	EALLOW;
 	GpioCtrlRegs.GPAMUX1.all = 00;		// GPIO15 ... GPIO0 = General Puropse I/O
-	GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 1; // enable PWM 1A
 	GpioCtrlRegs.GPAMUX2.all = 00;		// GPIO31 ... GPIO16 = General Purpose I/O
 	GpioCtrlRegs.GPBMUX1.all = 00;		// GPIO47 ... GPIO32 = General Purpose I/O
 	GpioCtrlRegs.GPBMUX2.all = 00;		// GPIO63 ... GPIO48 = General Purpose I/O
 	GpioCtrlRegs.GPCMUX1.all = 00;		// GPIO79 ... GPIO64 = General Purpose I/O
 	GpioCtrlRegs.GPCMUX2.all = 00;		// GPIO87 ... GPIO80 = General Purpose I/O
+
+	GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 1; // enable PWM 1A
+	GpioCtrlRegs.GPAMUX1.bit.GPIO2 = 1; // enable PWM 2A
+	GpioCtrlRegs.GPAMUX1.bit.GPIO4 = 1; // enable PWM 3A
 
 	GpioCtrlRegs.GPADIR.all = 0;
 
@@ -132,13 +136,31 @@ void Gpio_select(void){
 	EDIS;
 }   
 
-void PWM_Config (void) {
+/* PWM */
+
+void ePWM_Config (void) {
+	/* PWM 1A */
 	EPwm1Regs.TBCTL.bit.CLKDIV = 1;
 	EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0;
 	EPwm1Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
 	EPwm1Regs.TBPRD = 37500;
 	EPwm1Regs.AQCTLA.all = 6; // zero = set; period = clear
+
+	/* PWM 2A */
+	EPwm2Regs.TBCTL.bit.CLKDIV = 1;
+	EPwm2Regs.TBCTL.bit.HSPCLKDIV = 0;
+	EPwm2Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
+	EPwm2Regs.TBPRD = 37500;
+	EPwm2Regs.AQCTLA.all = 6; // zero = set; period = clear
+
+	/* PWM 3A */
+	EPwm3Regs.TBCTL.bit.CLKDIV = 1;
+	EPwm3Regs.TBCTL.bit.HSPCLKDIV = 0;
+	EPwm3Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
+	EPwm3Regs.TBPRD = 37500;
+	EPwm3Regs.AQCTLA.all = 6; // zero = set; period = clear
 }
+
 //===========================================================================
 // Fin du code source
 //===========================================================================
