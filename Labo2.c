@@ -27,6 +27,7 @@ void watchdogEnable(void);
 void watchdogDefuse(void);
 void wait100ms(void);
 void Gpio_select(void);
+void PWM_Config (void);
 
 /* it functions prototypes*/
 interrupt void cpu_timer0_isr(void);
@@ -42,7 +43,7 @@ void main(void){
 	watchdogDefuse();
 
 	Gpio_select();
-
+	PWM_Config();
 	InitPieCtrl(); /* init ITs */
 	InitPieVectTable(); /* Cette fonction TI va initialiser la mémoire du module PIE. */
 	connectITFunctions(); /* branch functions to interruptions */
@@ -116,6 +117,7 @@ void wait100ms(){
 void Gpio_select(void){
 	EALLOW;
 	GpioCtrlRegs.GPAMUX1.all = 00;		// GPIO15 ... GPIO0 = General Puropse I/O
+	GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 1; // enable PWM 1A
 	GpioCtrlRegs.GPAMUX2.all = 00;		// GPIO31 ... GPIO16 = General Purpose I/O
 	GpioCtrlRegs.GPBMUX1.all = 00;		// GPIO47 ... GPIO32 = General Purpose I/O
 	GpioCtrlRegs.GPBMUX2.all = 00;		// GPIO63 ... GPIO48 = General Purpose I/O
@@ -130,6 +132,13 @@ void Gpio_select(void){
 	EDIS;
 }   
 
+void PWM_Config (void) {
+	EPwm1Regs.TBCTL.bit.CLKDIV = 1;
+	EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0;
+	EPwm1Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
+	EPwm1Regs.TBPRD = 37500;
+	EPwm1Regs.AQCTLA.all = 6; // zero = set; period = clear
+}
 //===========================================================================
 // Fin du code source
 //===========================================================================
