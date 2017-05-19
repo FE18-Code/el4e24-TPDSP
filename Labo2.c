@@ -135,6 +135,7 @@ void Gpio_select(void){
 	GpioCtrlRegs.GPCMUX2.all = 00;		// GPIO87 ... GPIO80 = General Purpose I/O
 
 	GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 1; // enable PWM 1A
+	GpioCtrlRegs.GPAMUX1.bit.GPIO1 = 1; // enable PWM 1B
 	GpioCtrlRegs.GPAMUX1.bit.GPIO2 = 1; // enable PWM 2A
 	GpioCtrlRegs.GPAMUX1.bit.GPIO4 = 1; // enable PWM 3A
 
@@ -154,7 +155,10 @@ void ePWM_Config (void) {
 	EPwm1Regs.TBCTL.bit.HSPCLKDIV = 0;
 	EPwm1Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
 	EPwm1Regs.TBPRD = 37500;
-	EPwm1Regs.AQCTLA.all = 96; // CTR(up)=CMPA = set; CTR(down)=CMPA = clear
+	EPwm1Regs.AQCTLA.all = 96; // CTR(up)=CMPA = set; CTR(down)=CMPA = reset
+
+	/* PWM 1B */
+	EPwm1Regs.AQCTLB.all = 144; // CTR(up)=CMPA = reset; CTR(down)=CMPA = set
 
 	/* PWM 2A */
 	EPwm2Regs.TBCTL.bit.CLKDIV = 1;
