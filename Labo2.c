@@ -13,6 +13,12 @@
 #define DSP_CLOCK_SPEED_MHZ 150
 #define TIMER0_PERIOD_US (float)100000
 
+/* custom types definitions */
+typedef enum{
+	UP,
+	DOWN
+} ud;
+
 /* ext functions prototypes */
 void InitSysCtrl(void);
 void InitPieCtrl(void);
@@ -29,6 +35,7 @@ void wait100ms(void);
 void Gpio_select(void);
 void ePWM_Config (void);
 void ePWM_SetSync(void);
+void ePWM_UpdateAlpha(void);
 
 /* it functions prototypes*/
 interrupt void cpu_timer0_isr(void);
@@ -65,8 +72,10 @@ void main(void){
 
 interrupt void cpu_timer0_isr(void){
 	CpuTimer0.InterruptCount++;
-	GpioDataRegs.GPBTOGGLE.bit.GPIO32 = 1 ;
 	watchdogDefuse();
+
+	GpioDataRegs.GPBTOGGLE.bit.GPIO32 = 1 ; /* LED toggle */
+	ePWM_UpdateAlpha(); /* update PWM alpha */
 
 	PieCtrlRegs.PIEACK.all = PIEACK_GROUP1; /* it ACK : must be set to allow further calls to cpu_timer0_isr */
 }
@@ -146,7 +155,6 @@ void ePWM_Config (void) {
 	EPwm1Regs.TBCTL.bit.CTRMODE = 2; // Mode up/down
 	EPwm1Regs.TBPRD = 37500;
 	EPwm1Regs.AQCTLA.all = 96; // CTR(up)=CMPA = set; CTR(down)=CMPA = clear
-	EPwm1Regs.CMPA.half.CMPA = 25000;
 
 	/* PWM 2A */
 	EPwm2Regs.TBCTL.bit.CLKDIV = 1;
@@ -179,6 +187,27 @@ void ePWM_SetSync(void) {
 	/* PWM 3 SYNC IN */
 	EPwm3Regs.TBCTL.bit.PHSEN = 1; // Validation du reglage de phase : CTR=TBPHS on EPWNxSYNCI signal
 	EPwm3Regs.TBPHS.half.TBPHS = 25000; // 2/3 de TBPRD
+}
+
+void ePWM_UpdateAlpha(void){
+	static ud PWMupdown=UP;
+	const char step=100;
+
+	if(PWMupdown == UP){
+		/* CMPA ++ to MAX */
+		if(EPwm1Regs.CMPA.half.CMPA < EPwm2Regs.TBPRD){
+			EPwm1Regs.CMPA.half.CMPA+=step;
+		}else{
+			PWMupdown = DOWN;
+		}
+	}else{
+		/* CMPA -- to 0 */
+		if(EPwm1Regs.CMPA.half.CMPA > 0){
+			EPwm1Regs.CMPA.half.CMPA-=step;
+		}else{
+			PWMupdown = UP;
+		}
+	}
 }
 
 //===========================================================================
